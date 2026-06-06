@@ -1,0 +1,60 @@
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+
+const admin = () =>
+  createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  );
+
+// GET /api/teacher-subjects?teacher_id=xxx
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const teacher_id = searchParams.get("teacher_id");
+  if (!teacher_id) return NextResponse.json({ error: "teacher_id requis" }, { status: 400 });
+
+  const { data, error } = await admin()
+    .from("teacher_subjects")
+    .select("id, subject_id, subjects(id, name)")
+    .eq("teacher_id", teacher_id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
+
+// POST /api/teacher-subjects
+export async function POST(req: Request) {
+  const { teacher_id, subject_id } = await req.json();
+  if (!teacher_id || !subject_id)
+    return NextResponse.json({ error: "teacher_id et subject_id requis" }, { status: 400 });
+
+  const { data, error } = await admin()
+    .from("teacher_subjects")
+    .insert({ teacher_id, subject_id })
+    .select("id, subject_id, subjects(id, name)")
+    .single();
+
+  if (error) {
+    if (error.code === "23505") return NextResponse.json({ error: "Deja assigne" }, { status: 409 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data, { status: 201 });
+}
+
+// DELETE /api/teacher-subjects?teacher_id=xxx&subject_id=yyy
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const teacher_id = searchParams.get("teacher_id");
+  const subject_id = searchParams.get("subject_id");
+  if (!teacher_id || !subject_id)
+    return NextResponse.json({ error: "teacher_id et subject_id requis" }, { status: 400 });
+
+  const { error } = await admin()
+    .from("teacher_subjects")
+    .delete()
+    .eq("teacher_id", teacher_id)
+    .eq("subject_id", subject_id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
+}
