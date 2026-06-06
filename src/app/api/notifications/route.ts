@@ -69,6 +69,11 @@ export async function GET() {
         .limit(20);
       notifications = data ?? [];
     }
+    // Filter out enrollment notifications (admin-only) regardless of their type
+    // This handles both new type:"enrollment" and old type:"info" with title "Nouvelle inscription"
+    notifications = notifications.filter(
+      (n: any) => n.type !== "enrollment" && n.title !== "Nouvelle inscription",
+    );
   }
 
   const lastRead: string | undefined = user.user_metadata?.notifications_read_until;

@@ -92,6 +92,12 @@ export default function FormationsManager() {
     setShowModal(true);
   };
 
+  const COLOR_TO_CATEGORY: Record<string, "langues" | "informatique" | "cuisine"> = {
+    "deep-gradient": "langues",
+    "teal-gradient": "informatique",
+    "rose-gradient": "cuisine",
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -101,7 +107,7 @@ export default function FormationsManager() {
     const body = {
       title: form.title,
       title_ar: form.title_ar || null,
-      category: form.category,
+      category: COLOR_TO_CATEGORY[form.color_class] ?? form.category,
       description: form.description || null,
       description_ar: form.description_ar || null,
       image_url: form.image_url || null,
@@ -290,23 +296,13 @@ export default function FormationsManager() {
               )}
 
               {/* Common fields (always visible) */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Catégorie *</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as "langues" | "informatique" | "cuisine" })} className={inp}>
-                    <option value="langues">Langues Vivantes</option>
-                    <option value="informatique">Informatique & Design</option>
-                    <option value="cuisine">Cuisine & Pâtisserie</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Couleur de carte</label>
-                  <select value={form.color_class} onChange={(e) => setForm({ ...form, color_class: e.target.value })} className={inp}>
-                    <option value="deep-gradient">Rose/Violet</option>
-                    <option value="teal-gradient">Teal/Vert</option>
-                    <option value="rose-gradient">Rose/Orange</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Couleur de carte</label>
+                <select value={form.color_class} onChange={(e) => setForm({ ...form, color_class: e.target.value })} className={inp}>
+                  <option value="deep-gradient">Rose/Violet — Langues</option>
+                  <option value="teal-gradient">Teal/Vert — Informatique</option>
+                  <option value="rose-gradient">Rose/Orange — Cuisine</option>
+                </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Image (optionnel)</label>

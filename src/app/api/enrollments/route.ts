@@ -42,13 +42,13 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Create admin notification (non-blocking — ignore if type constraint fails)
-  db().from("notifications").insert({
+  // Create admin-only notification (non-blocking)
+  void db().from("notifications").insert({
     title: "Nouvelle inscription",
     message: `${first_name} ${last_name} souhaite s'inscrire à : ${formation_name}`,
-    type: "info",
+    type: "enrollment",
     class_id: null,
-  }).then(() => {}).catch(() => {});
+  });
 
   return NextResponse.json({ id: enrollment?.id }, { status: 201 });
 }
