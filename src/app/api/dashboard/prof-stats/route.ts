@@ -55,11 +55,12 @@ export async function GET() {
     totalStudents = (studentsRes.data ?? []).length;
     totalSlots = slotsRes.count ?? 0;
 
-    const counts: Record<string, { name: string; count: number }> = {};
+    const counts: Record<string, { className: string; count: number }> = {};
     for (const s of (studentsRes.data ?? [])) {
-      const cls = s.classes as { name: string } | null;
+      const raw: any = s.classes;
+      const cls: { name: string } | null = Array.isArray(raw) ? (raw[0] ?? null) : (raw ?? null);
       if (s.class_id && cls) {
-        if (!counts[s.class_id]) counts[s.class_id] = { name: cls.name, count: 0 };
+        if (!counts[s.class_id]) counts[s.class_id] = { className: cls.name, count: 0 };
         counts[s.class_id].count++;
       }
     }
