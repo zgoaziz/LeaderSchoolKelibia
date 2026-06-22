@@ -25,14 +25,13 @@ export function Navbar({ dict }: { dict: Dictionary }) {
           <Image
             src="/logoleaderschool.png"
             alt="Leader School Kelibia"
-            width={52}
-            height={52}
-            className="h-12 w-12 object-contain shrink-0"
+            width={68}
+            height={68}
+            className="h-16 w-16 object-contain shrink-0"
             priority
           />
           <div className="leading-tight">
-            <div className="font-extrabold text-[#1B3B6F] text-base md:text-lg tracking-tight">Leader School</div>
-            <div className="text-[11px] md:text-xs text-gray-500 font-medium tracking-wide">Kélibia, Tunisie</div>
+            <div className="font-extrabold text-[#1B3B6F] text-base md:text-lg tracking-tight">Leader School Kelibia</div>
           </div>
         </a>
 

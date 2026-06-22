@@ -97,7 +97,7 @@ export default async function ArPage() {
     <div
       dir="rtl"
       lang="ar"
-      className="min-h-screen bg-white"
+      className="min-h-screen bg-white overflow-x-hidden"
       style={{ fontFamily: `${cairo.style.fontFamily}, system-ui, sans-serif` }}
     >
       <Navbar dict={ar} />

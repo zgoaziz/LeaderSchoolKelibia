@@ -80,7 +80,7 @@ export default async function FrPage() {
 
   return (
     <div
-      className="min-h-screen bg-white"
+      className="min-h-screen bg-white overflow-x-hidden"
       style={{ fontFamily: "'Poppins', 'Inter', system-ui, -apple-system, sans-serif" }}
     >
       <Navbar dict={fr} />

@@ -14,7 +14,7 @@ type ClassItem = { id: string; name: string };
 type Teacher  = { id: string; first_name: string; last_name: string };
 
 type Resource = {
-  id: string; type: "youtube" | "drive" | "link";
+  id: string; type: "youtube" | "drive" | "link" | "file";
   title: string | null; url: string; position: number;
 };
 
@@ -53,33 +53,160 @@ function getYoutubeId(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function getDriveId(url: string): string | null {
+  return url.match(/\/file\/d\/([^/?\s]+)/)?.[1] ?? null;
+}
+
+const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff"]);
+const PDF_EXTS   = new Set(["pdf"]);
+const OFFICE_EXTS = new Set(["doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp"]);
+
+function getFileExt(url: string): string {
+  return (url.split("?")[0].split(".").pop() ?? "").toLowerCase();
+}
+
+function isImageUrl(url: string): boolean {
+  return IMAGE_EXTS.has(getFileExt(url));
+}
+
+function isPdfUrl(url: string): boolean {
+  return PDF_EXTS.has(getFileExt(url));
+}
+
+function isOfficeUrl(url: string): boolean {
+  return OFFICE_EXTS.has(getFileExt(url));
+}
+
+function getFileLabel(url: string, title: string | null): string {
+  if (title) return title;
+  const ext = getFileExt(url);
+  const nameMap: Record<string, string> = {
+    pdf: "Document PDF", doc: "Document Word", docx: "Document Word",
+    xls: "Feuille Excel", xlsx: "Feuille Excel",
+    ppt: "Présentation", pptx: "Présentation PowerPoint",
+    odt: "Document OpenOffice", ods: "Feuille Calc", odp: "Présentation Impress",
+  };
+  return nameMap[ext] ?? "Fichier";
+}
+
+function FilePreview({ url, title }: { url: string; title: string | null }) {
+  const ext = getFileExt(url);
+
+  const iconMap: Record<string, { icon: string; bg: string; color: string }> = {
+    pdf:  { icon: "📄", bg: "bg-red-50 dark:bg-red-900/20",    color: "text-red-600 dark:text-red-400"    },
+    doc:  { icon: "📝", bg: "bg-blue-50 dark:bg-blue-900/20",  color: "text-blue-600 dark:text-blue-400"  },
+    docx: { icon: "📝", bg: "bg-blue-50 dark:bg-blue-900/20",  color: "text-blue-600 dark:text-blue-400"  },
+    xls:  { icon: "📊", bg: "bg-green-50 dark:bg-green-900/20",color: "text-green-600 dark:text-green-400"},
+    xlsx: { icon: "📊", bg: "bg-green-50 dark:bg-green-900/20",color: "text-green-600 dark:text-green-400"},
+    ppt:  { icon: "📑", bg: "bg-orange-50 dark:bg-orange-900/20",color: "text-orange-600 dark:text-orange-400"},
+    pptx: { icon: "📑", bg: "bg-orange-50 dark:bg-orange-900/20",color: "text-orange-600 dark:text-orange-400"},
+  };
+
+  const meta = iconMap[ext] ?? { icon: "📁", bg: "bg-gray-50 dark:bg-gray-800", color: "text-gray-500" };
+
+  if (isImageUrl(url)) {
+    return (
+      <div className="flex items-center justify-center bg-gray-50 dark:bg-gray-800 p-2" style={{ minHeight: 120 }}>
+        <img src={url} alt={title ?? "Image"} className="max-h-40 max-w-full object-contain rounded" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-col items-center justify-center gap-2 py-5 px-4 ${meta.bg}`} style={{ minHeight: 100 }}>
+      <span className="text-4xl">{meta.icon}</span>
+      <span className={`text-xs font-semibold uppercase tracking-wide ${meta.color}`}>{ext.toUpperCase()}</span>
+      <span className="text-xs text-gray-500 dark:text-gray-400 text-center truncate max-w-full px-2">
+        {getFileLabel(url, title)}
+      </span>
+    </div>
+  );
+}
+
 function ResourceCard({ r, onDelete, canEdit }: { r: Resource; onDelete: () => void; canEdit: boolean }) {
-  const ytId = r.type === "youtube" ? getYoutubeId(r.url) : null;
+  const ytId    = r.type === "youtube" ? getYoutubeId(r.url) : null;
+  const driveId = r.type === "drive" ? getDriveId(r.url) : null;
+
+  const typeBadge: Record<string, { label: string; cls: string }> = {
+    youtube: { label: "▶ YouTube",  cls: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400" },
+    drive:   { label: "☁ Drive",    cls: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" },
+    file:    { label: "📎 Fichier", cls: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400" },
+    link:    { label: "🔗 Lien",    cls: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400" },
+  };
+  const badge = typeBadge[r.type] ?? typeBadge.link;
+
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-gray-900">
-      {ytId && (
+
+      {/* ── Preview zone ── */}
+      {r.type === "youtube" && ytId && (
         <div className="aspect-video bg-black">
-          <iframe
-            className="w-full h-full"
+          <iframe className="w-full h-full"
             src={`https://www.youtube-nocookie.com/embed/${ytId}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+            allowFullScreen title={r.title ?? "YouTube"} />
         </div>
       )}
-      <div className="flex items-center gap-3 px-3 py-2">
-        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-          r.type === "youtube" ? "bg-red-100 text-red-600" :
-          r.type === "drive"   ? "bg-blue-100 text-blue-600" :
-          "bg-gray-100 text-gray-600"
-        }`}>
-          {r.type === "youtube" ? "▶ YouTube" : r.type === "drive" ? "☁ Drive" : "🔗 Lien"}
-        </span>
-        <a href={r.url} target="_blank" rel="noreferrer" className="flex-1 text-sm text-blue-600 dark:text-blue-400 underline truncate">
-          {r.title ?? r.url}
+
+      {r.type === "drive" && driveId && (
+        <div className="relative w-full" style={{ paddingBottom: "65%", height: 0 }}>
+          <iframe src={`https://drive.google.com/file/d/${driveId}/preview`}
+            className="absolute inset-0 w-full h-full" allowFullScreen title={r.title ?? "Drive"} />
+        </div>
+      )}
+
+      {r.type === "file" && (
+        <>
+          {/* PDF → inline iframe */}
+          {isPdfUrl(r.url) && (
+            <div className="relative w-full" style={{ paddingBottom: "70%", height: 0 }}>
+              <iframe src={r.url} className="absolute inset-0 w-full h-full"
+                title={r.title ?? "PDF"} />
+            </div>
+          )}
+          {/* Office (Word/Excel/PPT) → Google Docs Viewer */}
+          {isOfficeUrl(r.url) && (
+            <div className="relative w-full" style={{ paddingBottom: "70%", height: 0 }}>
+              <iframe
+                src={`https://docs.google.com/gviewer?url=${encodeURIComponent(r.url)}&embedded=true`}
+                className="absolute inset-0 w-full h-full"
+                title={r.title ?? "Document"}
+              />
+            </div>
+          )}
+          {/* Everything else (images / unknown) */}
+          {!isPdfUrl(r.url) && !isOfficeUrl(r.url) && (
+            <FilePreview url={r.url} title={r.title} />
+          )}
+        </>
+      )}
+
+      {r.type === "link" && (
+        <a href={r.url} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <span className="text-2xl">🔗</span>
+          <span className="text-sm text-blue-600 dark:text-blue-400 underline truncate">{r.url}</span>
         </a>
+      )}
+
+      {/* ── Footer ── */}
+      <div className="flex items-center gap-3 px-3 py-2 border-t border-gray-100 dark:border-gray-800">
+        <span className={`text-xs font-semibold px-1.5 py-0.5 rounded shrink-0 ${badge.cls}`}>
+          {badge.label}
+        </span>
+        <span className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">
+          {r.title ?? getFileLabel(r.url, null)}
+        </span>
+        {r.type === "file" && (
+          <a href={r.url} target="_blank" rel="noopener noreferrer" download
+            className="shrink-0 p-1 text-gray-400 hover:text-brand-500 transition-colors" title="Télécharger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </a>
+        )}
         {canEdit && (
-          <button onClick={onDelete} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+          <button onClick={onDelete} className="text-gray-400 hover:text-red-500 transition-colors p-1 shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
             </svg>
@@ -124,8 +251,11 @@ export default function CoursesManager() {
 
   // Add resource
   const [showRes, setShowRes]   = useState(false);
-  const [resForm, setResForm]   = useState({ type: "youtube" as "youtube" | "drive" | "link", title: "", url: "" });
+  const [resForm, setResForm]   = useState({ type: "youtube" as "youtube" | "drive" | "link" | "file", title: "", url: "" });
   const [resLoading, setResLoading] = useState(false);
+  const [resUploading, setResUploading] = useState(false);
+  const [resDragOver, setResDragOver]   = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Classroom view (by chapter)
   const [view, setView] = useState<"list" | "editor">("list");
@@ -134,19 +264,44 @@ export default function CoursesManager() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       const r = user.app_metadata?.role as "admin" | "professeur" | "etudiant";
       setRole(r);
-    });
-    Promise.all([
-      fetch("/api/subjects").then(r => r.json()),
-      fetch("/api/classes").then(r => r.json()),
-      fetch("/api/teachers").then(r => r.json()),
-    ]).then(([s, c, t]) => {
-      setSubjects(Array.isArray(s) ? s : []);
-      setClasses(Array.isArray(c) ? c : []);
-      setTeachers(Array.isArray(t) ? t : []);
+
+      if (r === "etudiant") {
+        // Student: only show their class and its subjects
+        const stuRes = await fetch("/api/students/me").then(res => res.ok ? res.json() : null);
+        if (stuRes?.class_id) {
+          // Fetch subjects assigned to this class
+          const csRes = await fetch(`/api/class-subjects?class_id=${stuRes.class_id}`).then(res => res.ok ? res.json() : []);
+          const classSubjects: Subject[] = (Array.isArray(csRes) ? csRes : [])
+            .map((cs: any) => cs.subjects)
+            .filter(Boolean);
+
+          // Fallback to all subjects if none are assigned via class_subjects
+          const subjects = classSubjects.length > 0
+            ? classSubjects
+            : await fetch("/api/subjects").then(res => res.json()).then(d => Array.isArray(d) ? d : []);
+
+          setSubjects(subjects);
+          setClasses([stuRes.classes]);
+          setSelClass(stuRes.class_id);
+        } else {
+          // No student profile found — show all subjects, no class
+          const subRes = await fetch("/api/subjects").then(res => res.json());
+          setSubjects(Array.isArray(subRes) ? subRes : []);
+        }
+      } else {
+        const [s, c, t] = await Promise.all([
+          fetch("/api/subjects").then(res => res.json()),
+          fetch("/api/classes").then(res => res.json()),
+          fetch("/api/teachers").then(res => res.json()),
+        ]);
+        setSubjects(Array.isArray(s) ? s : []);
+        setClasses(Array.isArray(c) ? c : []);
+        setTeachers(Array.isArray(t) ? t : []);
+      }
     });
   }, []);
 
@@ -253,6 +408,18 @@ export default function CoursesManager() {
     await fetch(`/api/courses/${id}`, { method: "DELETE" });
     setCourses(prev => prev.filter(c => c.id !== id));
     if (editing?.id === id) closeEditor();
+  };
+
+  const handleResourceFileUpload = async (file: File) => {
+    setResUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    const res  = await fetch("/api/upload/cloudflare", { method: "POST", body: fd });
+    const json = await res.json();
+    setResUploading(false);
+    if (res.ok) {
+      setResForm(prev => ({ ...prev, url: json.url, type: "file" }));
+    }
   };
 
   const addResource = async (e: React.FormEvent) => {
@@ -383,35 +550,152 @@ export default function CoursesManager() {
         {/* Add Resource modal */}
         {showRes && (
           <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-5">
                 <h2 className="text-base font-semibold text-gray-800 dark:text-white">Ajouter une ressource</h2>
-                <button onClick={() => setShowRes(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+                <button onClick={() => { setShowRes(false); setResForm({ type: "youtube", title: "", url: "" }); }} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
               </div>
-              <form onSubmit={addResource} className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
-                  <select value={resForm.type} onChange={e => setResForm({ ...resForm, type: e.target.value as "youtube" | "drive" | "link" })} className={inp}>
-                    <option value="youtube">▶ YouTube</option>
-                    <option value="drive">☁ Google Drive</option>
-                    <option value="link">🔗 Lien externe</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">URL *</label>
-                  <input value={resForm.url} onChange={e => setResForm({ ...resForm, url: e.target.value })} placeholder={
-                    resForm.type === "youtube" ? "https://youtube.com/watch?v=..." :
-                    resForm.type === "drive"   ? "https://drive.google.com/..." :
-                    "https://"
-                  } className={inp} required />
-                </div>
+
+              {/* Type selector */}
+              <div className="grid grid-cols-4 gap-2 mb-5">
+                {(["file", "drive", "youtube", "link"] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setResForm(prev => ({ ...prev, type: t, url: "" }))}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold transition-all ${
+                      resForm.type === t
+                        ? "border-brand-400 bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:border-brand-600 dark:text-brand-400"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400"
+                    }`}
+                  >
+                    <span className="text-xl">{t === "file" ? "📤" : t === "drive" ? "🔷" : t === "youtube" ? "▶️" : "🔗"}</span>
+                    {t === "file" ? "Fichier" : t === "drive" ? "Drive" : t === "youtube" ? "YouTube" : "Lien"}
+                  </button>
+                ))}
+              </div>
+
+              <form onSubmit={addResource} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Titre (optionnel)</label>
-                  <input value={resForm.title} onChange={e => setResForm({ ...resForm, title: e.target.value })} placeholder="Ex : Vidéo du cours, Fiche PDF..." className={inp} />
+                  <input
+                    value={resForm.title ?? ""}
+                    onChange={e => setResForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ex : Fiche de cours, Exercices..."
+                    className={inp}
+                  />
                 </div>
+
+                {/* File upload */}
+                {resForm.type === "file" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Fichier</label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="*"
+                      className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleResourceFileUpload(f); }}
+                    />
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                        resDragOver ? "border-brand-400 bg-brand-50 dark:bg-brand-900/10" : "border-gray-300 dark:border-gray-600 hover:border-brand-300"
+                      }`}
+                      onDragOver={e => { e.preventDefault(); setResDragOver(true); }}
+                      onDragLeave={() => setResDragOver(false)}
+                      onDrop={e => { e.preventDefault(); setResDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleResourceFileUpload(f); }}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      {resUploading ? (
+                        <div className="py-3">
+                          <div className="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">Upload en cours...</p>
+                        </div>
+                      ) : resForm.url ? (
+                        <div className="py-2">
+                          <FilePreview url={resForm.url} title={resForm.title || null} />
+                          <p className="text-xs text-green-600 dark:text-green-400 font-medium mt-2">✓ Fichier uploadé avec succès</p>
+                          <p className="text-xs text-gray-400 mt-0.5">Cliquer pour remplacer</p>
+                        </div>
+                      ) : (
+                        <div className="py-4">
+                          <svg viewBox="0 0 24 24" className="w-9 h-9 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                          </svg>
+                          <p className="text-sm text-gray-500">Glisser-déposer ou cliquer</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            PDF · Word · Excel · PowerPoint · Images · Tous formats
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {resForm.type === "drive" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Lien Google Drive *</label>
+                    <input
+                      value={resForm.url ?? ""}
+                      onChange={e => setResForm(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://drive.google.com/file/d/.../view"
+                      className={inp}
+                    />
+                    {resForm.url && getDriveId(resForm.url) && (
+                      <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 relative" style={{ paddingBottom: "60%", height: 0 }}>
+                        <iframe src={`https://drive.google.com/file/d/${getDriveId(resForm.url)}/preview`}
+                          className="absolute inset-0 w-full h-full" title="Drive preview" />
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1.5">Partagez en mode "Tout le monde avec le lien"</p>
+                  </div>
+                )}
+
+                {resForm.type === "youtube" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Lien YouTube *</label>
+                    <input
+                      value={resForm.url ?? ""}
+                      onChange={e => setResForm(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://youtu.be/... ou https://youtube.com/watch?v=..."
+                      className={inp}
+                    />
+                    {resForm.url && getYoutubeId(resForm.url) && (
+                      <div className="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 relative" style={{ paddingBottom: "56.25%", height: 0 }}>
+                        <iframe src={`https://www.youtube-nocookie.com/embed/${getYoutubeId(resForm.url)}`}
+                          className="absolute inset-0 w-full h-full" allowFullScreen title="YouTube preview" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {resForm.type === "link" && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">URL du lien *</label>
+                    <input
+                      value={resForm.url ?? ""}
+                      onChange={e => setResForm(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://..."
+                      className={inp}
+                      type="url"
+                    />
+                    {resForm.url && (
+                      <div className="mt-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2.5 flex items-center gap-2 bg-gray-50 dark:bg-gray-800">
+                        <span className="text-lg shrink-0">🔗</span>
+                        <a href={resForm.url} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-brand-500 hover:underline truncate flex-1">{resForm.url}</a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => setShowRes(false)} className="flex-1 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">Annuler</button>
-                  <button type="submit" disabled={resLoading} className="flex-1 py-2.5 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 disabled:opacity-60">
+                  <button type="button" onClick={() => { setShowRes(false); setResForm({ type: "youtube", title: "", url: "" }); }}
+                    className="flex-1 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">
+                    Annuler
+                  </button>
+                  <button type="submit" disabled={resLoading || resUploading || !resForm.url}
+                    className="flex-1 py-2.5 rounded-lg bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
                     {resLoading ? "Ajout..." : "Ajouter"}
                   </button>
                 </div>
@@ -456,10 +740,17 @@ export default function CoursesManager() {
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Classe</label>
-          <select value={selClass} onChange={e => setSelClass(e.target.value)} className={inp}>
-            <option value="">— Sélectionner une classe —</option>
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          {role === "etudiant" ? (
+            <div className={`${inp} bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 cursor-default flex items-center gap-2`}>
+              <span className="w-2 h-2 rounded-full bg-brand-500 shrink-0" />
+              {classes[0]?.name ?? "Aucune classe assignée"}
+            </div>
+          ) : (
+            <select value={selClass} onChange={e => setSelClass(e.target.value)} className={inp}>
+              <option value="">— Sélectionner une classe —</option>
+              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
         </div>
       </div>
 

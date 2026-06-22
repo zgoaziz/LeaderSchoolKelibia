@@ -14,15 +14,17 @@ export default async function Dashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   const role = user?.app_metadata?.role ?? "etudiant";
 
+  const isStudent = role !== "admin" && role !== "professeur";
+
   const title = role === "professeur"
     ? "Mon espace professeur"
-    : role === "etudiant"
+    : isStudent
     ? "Mon espace étudiant"
     : "Tableau de bord";
 
   const subtitle = role === "professeur"
     ? "Vos classes, étudiants et matières"
-    : role === "etudiant"
+    : isStudent
     ? "Votre classe, matières et emploi du temps"
     : "Vue d'ensemble — Leader School Kélibia";
 

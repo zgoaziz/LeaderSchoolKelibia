@@ -33,6 +33,13 @@ export default function StudentsManager() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
+  // User picker
+  type UserOption = { id: string; email: string; first_name: string; last_name: string; role: string };
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   // ── 1. Init: detect role + load class tabs ──
   useEffect(() => {
     const init = async () => {
@@ -108,6 +115,41 @@ export default function StudentsManager() {
     );
   });
 
+  const openModal = async () => {
+    setShowModal(true);
+    setUsersLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      const json = await res.json();
+      const list: UserOption[] = (json.users ?? []).map((u: any) => ({
+        id: u.id,
+        email: u.email ?? "",
+        first_name: u.user_metadata?.first_name ?? "",
+        last_name: u.user_metadata?.last_name ?? "",
+        role: u.app_metadata?.role ?? "",
+      }));
+      setUsers(list);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const pickUser = (u: UserOption) => {
+    setSelectedUserId(u.id);
+    setForm((prev) => ({
+      ...prev,
+      email: u.email || prev.email,
+      first_name: u.first_name || prev.first_name,
+      last_name: u.last_name || prev.last_name,
+    }));
+    setUserSearch("");
+  };
+
+  const clearUser = () => {
+    setSelectedUserId(null);
+    setUserSearch("");
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
@@ -115,13 +157,15 @@ export default function StudentsManager() {
     const res = await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, user_id: selectedUserId }),
     });
     const json = await res.json();
     setFormLoading(false);
     if (!res.ok) { setFormError(json.error); return; }
     setShowModal(false);
     setForm({ first_name: "", last_name: "", email: "", phone: "", class_id: "" });
+    setSelectedUserId(null);
+    setUserSearch("");
     // Reload
     setSelectedClassId((prev) => prev); // triggers useEffect
     setStudLoading(true);
@@ -178,9 +222,9 @@ export default function StudentsManager() {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
             {role === "admin" ? "Gestion des étudiants" : "Étudiants de mes classes"}
@@ -193,7 +237,7 @@ export default function StudentsManager() {
         </div>
         {role === "admin" && (
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openModal}
             className="px-4 py-2.5 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600"
           >
             + Ajouter un étudiant
@@ -257,8 +301,8 @@ export default function StudentsManager() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Nom</th>
@@ -338,9 +382,89 @@ export default function StudentsManager() {
 
       {/* Add student modal — admin only */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Ajouter un étudiant</h2>
+
+            {/* User picker */}
+            <div className="mb-4 rounded-xl border border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-800/50">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                Lier à un compte existant
+              </p>
+              {selectedUserId ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-800 px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-brand-700 dark:text-brand-300">
+                      {users.find(u => u.id === selectedUserId)?.email ?? selectedUserId}
+                    </p>
+                    {users.find(u => u.id === selectedUserId)?.role && (
+                      <p className="text-xs text-brand-500 dark:text-brand-400 mt-0.5">
+                        Rôle : {users.find(u => u.id === selectedUserId)?.role}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearUser}
+                    className="text-xs text-red-500 hover:text-red-700 shrink-0"
+                  >
+                    ✕ Retirer
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    placeholder={usersLoading ? "Chargement des utilisateurs…" : "Rechercher par email ou nom…"}
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    disabled={usersLoading}
+                    className={inputCls}
+                  />
+                  {userSearch.trim().length > 0 && (
+                    <div className="mt-1.5 max-h-40 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-800">
+                      {users
+                        .filter((u) => {
+                          const q = userSearch.toLowerCase();
+                          return (
+                            u.email.toLowerCase().includes(q) ||
+                            u.first_name.toLowerCase().includes(q) ||
+                            u.last_name.toLowerCase().includes(q)
+                          );
+                        })
+                        .slice(0, 8)
+                        .map((u) => (
+                          <button
+                            key={u.id}
+                            type="button"
+                            onClick={() => pickUser(u)}
+                            className="w-full text-left px-3 py-2 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+                          >
+                            <p className="text-sm font-medium text-gray-800 dark:text-white">
+                              {u.first_name || u.last_name
+                                ? `${u.first_name} ${u.last_name}`.trim()
+                                : <span className="text-gray-400 italic">Sans nom</span>}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{u.email}</p>
+                            {u.role && (
+                              <span className="inline-block mt-0.5 text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                {u.role}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      {users.filter((u) => {
+                        const q = userSearch.toLowerCase();
+                        return u.email.toLowerCase().includes(q) || u.first_name.toLowerCase().includes(q) || u.last_name.toLowerCase().includes(q);
+                      }).length === 0 && (
+                        <p className="px-3 py-3 text-xs text-gray-400 text-center">Aucun utilisateur trouvé</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             {formError && <p className="mb-3 text-sm text-red-500">{formError}</p>}
             <form onSubmit={handleAdd} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -375,7 +499,12 @@ export default function StudentsManager() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setForm({ first_name: "", last_name: "", email: "", phone: "", class_id: "" });
+                    setSelectedUserId(null);
+                    setUserSearch("");
+                  }}
                   className="flex-1 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
                 >
                   Annuler

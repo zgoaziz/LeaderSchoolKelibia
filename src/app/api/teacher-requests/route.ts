@@ -106,6 +106,7 @@ export async function POST(req: Request) {
     class_id: null,
     title: `Demande de ${type === "conge" ? "congé" : "absence"} — ${name}`,
     message: `${name} a soumis une demande de ${type === "conge" ? "congé" : "absence"} pour le ${fmtDate}${reason ? ` : ${reason}` : ""}.`,
+    body: `${name} a soumis une demande de ${type === "conge" ? "congé" : "absence"} pour le ${fmtDate}${reason ? ` : ${reason}` : ""}.`,
     type: "info",
     metadata: { request_id: data.id, teacher_id: resolvedTeacherId, date },
   });

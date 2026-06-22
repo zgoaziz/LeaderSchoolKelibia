@@ -46,6 +46,7 @@ export async function POST(req: Request) {
     class_id: null,
     title: `Congé – ${name}`,
     message: `Pas de cours le ${fmtDate}.`,
+    body: `Pas de cours le ${fmtDate}.`,
     type: "holiday",
     metadata: { date },
   });

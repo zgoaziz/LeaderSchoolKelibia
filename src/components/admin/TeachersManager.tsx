@@ -250,9 +250,9 @@ export default function TeachersManager() {
   const inputCls = "w-full h-10 rounded-lg border border-gray-300 px-3 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-white focus:outline-none focus:border-brand-400";
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Gestion des professeurs</h1>
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Gestion des professeurs</h1>
         <button
           onClick={openAddModal}
           className="px-4 py-2.5 rounded-lg bg-brand-500 text-white text-sm font-medium hover:bg-brand-600"
@@ -261,8 +261,8 @@ export default function TeachersManager() {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Nom</th>
@@ -577,8 +577,8 @@ export default function TeachersManager() {
                         Aucune absence enregistrée
                       </div>
                     ) : (
-                      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-                        <table className="w-full text-sm">
+                      <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                        <table className="w-full text-sm min-w-[400px]">
                           <thead className="bg-gray-50 dark:bg-gray-800">
                             <tr>
                               <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Date</th>

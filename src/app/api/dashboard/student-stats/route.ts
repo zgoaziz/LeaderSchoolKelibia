@@ -8,7 +8,8 @@ export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  if (user.app_metadata?.role !== "etudiant") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  const role = user.app_metadata?.role;
+  if (role === "admin" || role === "professeur") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   // Find student by user_id first, then by email
   let student: { id: string; first_name: string; last_name: string; class_id: string | null } | null = null;

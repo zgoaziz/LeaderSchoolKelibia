@@ -39,13 +39,25 @@ export async function GET() {
         classIds = (tclasses ?? []).map((r: any) => r.class_id);
       }
     } else {
-      // etudiant — try to find class via students table
+      // etudiant — find class via user_id first, then by email as fallback
       try {
-        const { data: student } = await db()
+        let student: { class_id: string | null } | null = null;
+        const { data: byId } = await db()
           .from("students")
           .select("class_id")
           .eq("user_id", user.id)
           .maybeSingle();
+        student = byId;
+
+        if (!student?.class_id && user.email) {
+          const { data: byEmail } = await db()
+            .from("students")
+            .select("class_id")
+            .eq("email", user.email)
+            .maybeSingle();
+          student = byEmail;
+        }
+
         if (student?.class_id) classIds = [student.class_id];
       } catch {
         // students table may not have user_id column — show global only
@@ -75,6 +87,12 @@ export async function GET() {
       (n: any) => n.type !== "enrollment" && n.title !== "Nouvelle inscription",
     );
   }
+
+  // Normalize: some DB setups use "body" instead of "message"
+  notifications = notifications.map((n: any) => ({
+    ...n,
+    message: n.message || n.body || "",
+  }));
 
   const lastRead: string | undefined = user.user_metadata?.notifications_read_until;
   const unreadCount = lastRead

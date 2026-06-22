@@ -88,9 +88,9 @@ export default function EnrollmentsManager() {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Inscriptions</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Inscriptions</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Gérez les demandes d&apos;inscription
           </p>
@@ -132,8 +132,8 @@ export default function EnrollmentsManager() {
           <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">

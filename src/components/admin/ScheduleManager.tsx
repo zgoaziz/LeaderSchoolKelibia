@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import ScheduleViewer from "@/components/admin/ScheduleViewer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -105,7 +106,7 @@ const inp = "w-full h-10 rounded-lg border border-gray-300 px-3 text-sm dark:bor
 const todayStr = toDateStr(new Date());
 
 export default function ScheduleManager() {
-  const [role, setRole]           = useState<"admin" | "professeur" | null>(null);
+  const [role, setRole]           = useState<"admin" | "professeur" | "etudiant" | null>(null);
   const [myTeacher, setMyTeacher] = useState<MyTeacher | null>(null);
   const [noTeacher, setNoTeacher] = useState(false);
 
@@ -165,6 +166,12 @@ export default function ScheduleManager() {
   const [profAbsentForm, setProfAbsentForm]       = useState({ teacher_id: "", date: "", reason: "" });
   const [profAbsentLoading, setProfAbsentLoading] = useState(false);
   const [profAbsentError, setProfAbsentError]     = useState("");
+
+  // ── Publish
+  const [publishing, setPublishing] = useState(false);
+  const [showPublishConfirm, setShowPublishConfirm] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<"success" | "error" | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   // ─── Init ────────────────────────────────────────────────────────────────────
 
@@ -489,6 +496,49 @@ export default function ScheduleManager() {
     return COLORS[Math.max(0, idx) % COLORS.length];
   };
 
+  const handlePublish = async () => {
+    if (!activeSem || !selectedClass) return;
+    setShowPublishConfirm(true);
+  };
+
+  const confirmPublish = async () => {
+    if (!activeSem || !selectedClass) return;
+    const cls = classes.find(c => c.id === selectedClass);
+    setShowPublishConfirm(false);
+    setPublishing(true);
+    setPublishStatus(null);
+    setPublishError(null);
+    try {
+      const res = await fetch("/api/schedule/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          class_id: selectedClass,
+          semester_id: activeSem.id,
+          class_name: cls?.name ?? "",
+          semester_name: activeSem.name,
+        }),
+      });
+      if (res.ok) {
+        setPublishStatus("success");
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setPublishError(json.error ?? "Erreur inconnue");
+        setPublishStatus("error");
+      }
+    } catch (e: any) {
+      setPublishError(e?.message ?? "Erreur réseau");
+      setPublishStatus("error");
+    } finally {
+      setPublishing(false);
+      setTimeout(() => { setPublishStatus(null); setPublishError(null); }, 8000);
+    }
+  };
+
+  // ─── Student view (read-only) ────────────────────────────────────────────────
+
+  if (role === "etudiant") return <ScheduleViewer />;
+
   // ─── Semester list view ───────────────────────────────────────────────────────
 
   if (view === "list") {
@@ -532,8 +582,8 @@ export default function ScheduleManager() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+          <table className="w-full text-sm min-w-[500px]">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-gray-400">Semestre</th>
@@ -636,8 +686,36 @@ export default function ScheduleManager() {
               Prof absent (jour)
             </button>
           )}
+          {role === "admin" && selectedClass && (
+            <button
+              onClick={handlePublish}
+              disabled={publishing}
+              className="px-3 py-1.5 rounded-lg bg-green-500 border border-green-600 text-white text-xs font-medium hover:bg-green-600 disabled:opacity-60"
+            >
+              {publishing ? "Envoi..." : "📢 Publier l'emploi du temps"}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* ── Publish status toast ── */}
+      {publishStatus === "success" && (
+        <div className="mb-4 flex items-center gap-2 rounded-xl bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800 px-4 py-3 text-sm text-green-700 dark:text-green-300">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Notification envoyée aux étudiants et professeurs de la classe.
+        </div>
+      )}
+      {publishStatus === "error" && (
+        <div className="mb-4 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-2 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Erreur lors de l'envoi de la notification.
+          </div>
+          {publishError && (
+            <p className="mt-1 text-xs opacity-80 font-mono break-all">{publishError}</p>
+          )}
+        </div>
+      )}
 
       {/* ── Tabs ── */}
       <div className="flex gap-1 mb-5 border-b border-gray-200 dark:border-gray-700">
@@ -1452,6 +1530,44 @@ export default function ScheduleManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Publish confirmation modal ── */}
+      {showPublishConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 dark:text-green-400"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-white">Publier l'emploi du temps</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Une notification sera envoyée à tous les étudiants et professeurs de la classe{" "}
+                  <strong className="text-gray-700 dark:text-gray-200">
+                    {classes.find(c => c.id === selectedClass)?.name}
+                  </strong>.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPublishConfirm(false)}
+                className="flex-1 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmPublish}
+                className="flex-1 py-2.5 rounded-lg bg-green-500 text-white text-sm font-medium hover:bg-green-600"
+              >
+                Envoyer la notification
+              </button>
+            </div>
           </div>
         </div>
       )}

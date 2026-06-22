@@ -27,7 +27,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/ar", request.url));
+    return NextResponse.redirect(new URL("/fr", request.url));
   }
 
   if (!user && pathname.startsWith("/dashboard")) {

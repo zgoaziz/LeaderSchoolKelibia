@@ -67,6 +67,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         class_id: null,
         title: `Demande approuvée — ${tName}`,
         message: `Votre demande de ${reqRow.type === "conge" ? "congé" : "absence"} pour le ${fmtDate} a été approuvée.`,
+        body: `Votre demande de ${reqRow.type === "conge" ? "congé" : "absence"} pour le ${fmtDate} a été approuvée.`,
         type: "info",
         metadata: { request_id: id, teacher_id: reqRow.teacher_id },
       });
@@ -81,6 +82,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         class_id: null,
         title: `Demande refusée — ${tName}`,
         message: `Votre demande de ${reqRow.type === "conge" ? "congé" : "absence"} pour le ${fmtDate} a été refusée${admin_note ? ` : ${admin_note}` : ""}.`,
+        body: `Votre demande de ${reqRow.type === "conge" ? "congé" : "absence"} pour le ${fmtDate} a été refusée${admin_note ? ` : ${admin_note}` : ""}.`,
         type: "info",
         metadata: { request_id: id, teacher_id: reqRow.teacher_id },
       });

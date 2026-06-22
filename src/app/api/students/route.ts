@@ -28,13 +28,20 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const { first_name, last_name, email, phone, class_id } = body;
+  const { first_name, last_name, email, phone, class_id, user_id } = body;
   if (!first_name?.trim() || !last_name?.trim())
     return NextResponse.json({ error: "Prénom et nom requis" }, { status: 400 });
 
   const { data, error } = await admin()
     .from("students")
-    .insert({ first_name: first_name.trim(), last_name: last_name.trim(), email, phone, class_id: class_id || null })
+    .insert({
+      first_name: first_name.trim(),
+      last_name: last_name.trim(),
+      email,
+      phone,
+      class_id: class_id || null,
+      user_id: user_id || null,
+    })
     .select("*, classes(name)")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

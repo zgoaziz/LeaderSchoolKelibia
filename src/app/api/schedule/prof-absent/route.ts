@@ -90,6 +90,7 @@ export async function POST(req: Request) {
     class_id: null,
     title: `Absence de prof — ${teacherName}`,
     message: `${teacherName} sera absent(e) le ${fmtDate}. Les cours correspondants sont annulés${reason ? ` (${reason})` : ""}.`,
+    body: `${teacherName} sera absent(e) le ${fmtDate}. Les cours correspondants sont annulés${reason ? ` (${reason})` : ""}.`,
     type: "absent",
     metadata: { date, teacher_id, slots_count: created },
   });

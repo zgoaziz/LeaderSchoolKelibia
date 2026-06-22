@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     message = `Le cours de ${subjectName} du ${fmtDate} est annulé pour ${className}${reason ? ` (${reason})` : ""}.`;
   }
 
-  await db().from("notifications").insert({ class_id, title, message, type, metadata: { date, subject_id, teacher_id } });
+  await db().from("notifications").insert({ class_id, title, message, body: message, type, metadata: { date, subject_id, teacher_id } });
 
   return NextResponse.json(data, { status: 201 });
 }

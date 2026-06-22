@@ -8,10 +8,22 @@ const admin = () =>
   );
 
 // GET /api/class-subjects?subject_id=xxx → classes assigned to this subject
+// GET /api/class-subjects?class_id=xxx  → subjects assigned to this class
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const subject_id = searchParams.get("subject_id");
-  if (!subject_id) return NextResponse.json({ error: "subject_id requis" }, { status: 400 });
+  const class_id   = searchParams.get("class_id");
+
+  if (class_id) {
+    const { data, error } = await admin()
+      .from("class_subjects")
+      .select("id, subject_id, subjects(id, name)")
+      .eq("class_id", class_id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(data);
+  }
+
+  if (!subject_id) return NextResponse.json({ error: "subject_id ou class_id requis" }, { status: 400 });
 
   const { data, error } = await admin()
     .from("class_subjects")

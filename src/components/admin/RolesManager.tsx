@@ -201,10 +201,10 @@ export default function RolesManager() {
     : false;
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Rôles & Permissions</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Rôles & Permissions</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Créez des rôles, configurez leurs accès et définissez leur visibilité sur la page d&apos;inscription.
           </p>

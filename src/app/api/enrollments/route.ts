@@ -46,6 +46,7 @@ export async function POST(req: Request) {
   void db().from("notifications").insert({
     title: "Nouvelle inscription",
     message: `${first_name} ${last_name} souhaite s'inscrire à : ${formation_name}`,
+    body: `${first_name} ${last_name} souhaite s'inscrire à : ${formation_name}`,
     type: "enrollment",
     class_id: null,
   });

@@ -11,16 +11,16 @@ export function Hero({ dict }: { dict: Dictionary }) {
       id="accueil"
       className="relative hero-gradient text-white overflow-hidden pt-24 md:pt-28"
     >
-      <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-[#FF3B7F]/20 blur-3xl animate-float-slow" />
-      <div className="absolute top-1/3 -right-32 w-md h-112 rounded-full bg-[#00C9A7]/20 blur-3xl animate-float-slow" />
-      <div className="absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-white/5 blur-2xl" />
+      <div className="absolute -top-24 -left-24 w-80 h-80 rounded-full bg-[#FF3B7F]/20 blur-2xl animate-float-slow" />
+      <div className="absolute top-1/3 -right-20 w-72 h-72 rounded-full bg-[#00C9A7]/20 blur-2xl animate-float-slow" />
+      <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-white/5 blur-xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 grid lg:grid-cols-2 gap-12 items-center">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
         <motion.div
-          initial={{ opacity: 0, x: isRtl ? 30 : -30 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="relative order-2 lg:order-1"
+          className="relative order-2 lg:order-1 min-w-0"
         >
           <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-4/5 max-w-md mx-auto">
             <img
@@ -53,13 +53,13 @@ export function Hero({ dict }: { dict: Dictionary }) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-          className="order-1 lg:order-2"
+          className="order-1 lg:order-2 min-w-0"
         >
           <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 rounded-full px-4 py-1.5 text-xs sm:text-sm font-medium">
             <span className="w-2 h-2 rounded-full bg-[#00C9A7] animate-pulse" />
             {d.badge}
           </span>
-          <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.05] tracking-tight">
+          <h1 className="mt-5 text-[1.75rem] sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight break-words">
             {d.title1}{" "}
             <span className="relative inline-block">
               <span className="relative z-10 text-[#FF3B7F]">{d.titleHighlight}</span>
@@ -67,7 +67,7 @@ export function Hero({ dict }: { dict: Dictionary }) {
             </span>{" "}
             {d.title2}
           </h1>
-          <p className="mt-6 text-base sm:text-lg text-white/80 max-w-xl leading-relaxed">
+          <p className="mt-6 text-sm sm:text-base md:text-lg text-white/80 max-w-xl leading-relaxed">
             {d.subtitle}
           </p>
 
@@ -87,7 +87,7 @@ export function Hero({ dict }: { dict: Dictionary }) {
             </a>
           </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-4 max-w-md">
+          <div className="mt-10 grid grid-cols-3 gap-4 max-w-xs sm:max-w-md">
             {d.stats.map((s) => (
               <div key={s.l} className={`${isRtl ? "border-r-2 pr-3" : "border-l-2 pl-3"} border-white/20`}>
                 <div className="text-2xl sm:text-3xl font-extrabold">{s.v}</div>

@@ -120,9 +120,9 @@ export default function GalleryManager() {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Galerie</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Galerie</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Photos affichées sur le site public (FR + AR)</p>
         </div>
         <button onClick={openNew} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors">

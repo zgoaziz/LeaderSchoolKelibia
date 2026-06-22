@@ -137,9 +137,9 @@ export default function PaymentsManager() {
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start gap-3 justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Paiements</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Paiements</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Suivi des paiements par étudiant
           </p>
@@ -167,7 +167,7 @@ export default function PaymentsManager() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900 rounded-xl p-4">
           <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">Total payé</p>
           <p className="text-xl font-bold text-green-700 dark:text-green-300">{fmt(totalPaid)}</p>
@@ -207,8 +207,8 @@ export default function PaymentsManager() {
           <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800">
                 <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
